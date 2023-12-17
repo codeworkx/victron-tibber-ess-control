@@ -1,0 +1,1793 @@
+[
+    {
+        "id": "d1a79cb7a1857836",
+        "type": "tab",
+        "label": "Tibber",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "ef1725482f2d21a8",
+        "type": "template",
+        "z": "d1a79cb7a1857836",
+        "name": "Current energy price",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "{\n  viewer {\n    homes {\n      currentSubscription {\n        priceInfo {\n          current {\n            total\n            startsAt\n          }\n          today {\n            total\n            startsAt\n          }\n          tomorrow {\n            total\n            startsAt\n          }\n        }\n      }\n    }\n  }\n}",
+        "output": "str",
+        "x": 560,
+        "y": 100,
+        "wires": [
+            [
+                "0547c5f9b86b4a0a"
+            ]
+        ]
+    },
+    {
+        "id": "0547c5f9b86b4a0a",
+        "type": "tibber-query",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "active": true,
+        "apiEndpointRef": "073c94010f8c84e0",
+        "x": 770,
+        "y": 100,
+        "wires": [
+            [
+                "a32cbfd24053aca5",
+                "2489c89b2cf826df",
+                "32deb253332c9a29",
+                "df121a781659dce6"
+            ]
+        ]
+    },
+    {
+        "id": "93b0b1a9790769a3",
+        "type": "victron-output-ess",
+        "z": "d1a79cb7a1857836",
+        "service": "com.victronenergy.settings",
+        "path": "/Settings/CGwacs/BatteryLife/MinimumSocLimit",
+        "serviceObj": {
+            "service": "com.victronenergy.settings",
+            "name": "Venus settings"
+        },
+        "pathObj": {
+            "path": "/Settings/CGwacs/BatteryLife/MinimumSocLimit",
+            "type": "integer",
+            "name": "Minimum Discharge SOC (%)",
+            "writable": true
+        },
+        "name": "",
+        "onlyChanges": false,
+        "x": 2320,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "a32cbfd24053aca5",
+        "type": "ps-receive-price",
+        "z": "d1a79cb7a1857836",
+        "name": "Price Receiver",
+        "x": 960,
+        "y": 160,
+        "wires": [
+            [
+                "2ff24e4bea53ddec",
+                "63ce8d7211dd1baa"
+            ]
+        ]
+    },
+    {
+        "id": "2489c89b2cf826df",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "tibber-query",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 910,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "2ff24e4bea53ddec",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "Price Receiver",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1160,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "7886a9ba56d32feb",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Chart Data",
+        "func": "\nvar hours = msg.payload.hours;\n\nconst series = [\"Schedule\", \"Price\"];\nconst data = [];\ndata[0] = [];\ndata[1] = [];\nconst labels = [\"Schedule\", \"Price\"];\n\nfor (let i = 0; i < hours.length; i++) {\n  \n  if (hours[i].onOff) {\n      data[0][i] = { \"x\": hours[i].start, \"y\": hours[i].price};\n  } else {\n      data[0][i] = { \"x\": hours[i].start, \"y\": 0};\n  }\n  \n  data[1][i] = { \"x\": hours[i].start, \"y\": hours[i].price};\n}\n\nmsg.payload=[{\n    \"series\": series,\n    \"data\": data,\n    \"labels\": labels\n}];\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2210,
+        "y": 100,
+        "wires": [
+            [
+                "7fb781f15b39147a"
+            ]
+        ]
+    },
+    {
+        "id": "7fb781f15b39147a",
+        "type": "ui_chart",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "group": "ae94fc0e9881e8c0",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "label": "Price & Schedule Chart",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "auto",
+        "interpolate": "step",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "6",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#ff0000",
+            "#0080ff",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 2430,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "32deb253332c9a29",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "max allowed price",
+        "func": "const CHARGER_EFFICIENCY_FACTOR = flow.get('charger_efficiency_factor') || 0.90;\nconst INVERTER_EFFICIENCY_FACTOR = flow.get('inverter_efficiency_factor') || 0.90;\nconst STORAGE_COSTS = flow.get('storage_costs') || 0.00;\n\nlet price_max_allowed = 0.20;\nconst hours = msg.payload.viewer.homes[0].currentSubscription.priceInfo.today;\nconst price_current = msg.payload.viewer.homes[0].currentSubscription.priceInfo.current.total;\nflow.set('price_current', price_current);\n\nif (hours.length >= 24)\n{\n    let price_low = hours[0].total;\n    let price_high = hours[0].total;\n\n    for (let i = 0; i < 24; i++) \n    {\n        if (hours[i].total < price_low)\n        {\n            price_low = hours[i].total;\n        }\n        \n        if (hours[i].total > price_high)\n        {\n            price_high = hours[i].total;\n        }\n    }\n    \n    price_max_allowed = price_high * CHARGER_EFFICIENCY_FACTOR * INVERTER_EFFICIENCY_FACTOR - STORAGE_COSTS;\n    \n    flow.set('price_low', price_low);\n    flow.set('price_high', price_high);\n    flow.set('price_max_allowed', price_max_allowed);\n}\n\nmsg.payload = Number(price_max_allowed);\nnode.status({text:\"\" + msg.payload});\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 100,
+        "wires": [
+            [
+                "fd2431b376d968b2"
+            ]
+        ]
+    },
+    {
+        "id": "7f18f0875225b2b3",
+        "type": "pushbullet",
+        "z": "d1a79cb7a1857836",
+        "config": "80c802fa5c3703dc",
+        "pushtype": "note",
+        "title": "Push from Tibber Flow",
+        "chan": "",
+        "name": "",
+        "x": 2740,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "cc05113d3431c7da",
+        "type": "cronplus",
+        "z": "d1a79cb7a1857836",
+        "name": "Every hour",
+        "outputField": "payload",
+        "timeZone": "",
+        "storeName": "",
+        "commandResponseMsgOutput": "output1",
+        "defaultLocation": "50.31687238278184 10.178041756153105",
+        "defaultLocationType": "fixed",
+        "outputs": 1,
+        "options": [
+            {
+                "name": "schedule1",
+                "topic": "topic1",
+                "payloadType": "default",
+                "payload": "",
+                "expressionType": "cron",
+                "expression": "0 2 * * * * *",
+                "location": "",
+                "offset": "0",
+                "solarType": "all",
+                "solarEvents": "sunrise,sunset"
+            }
+        ],
+        "x": 110,
+        "y": 100,
+        "wires": [
+            [
+                "a571f168cae8d985"
+            ]
+        ]
+    },
+    {
+        "id": "d1d3bf267703f920",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "store schedule",
+        "func": "flow.set(\"schedule\", msg.payload.schedule);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2220,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "38555d9074420afd",
+        "type": "cronplus",
+        "z": "d1a79cb7a1857836",
+        "name": "6:05 / 14:05",
+        "outputField": "payload",
+        "timeZone": "",
+        "storeName": "",
+        "commandResponseMsgOutput": "output1",
+        "defaultLocation": "50.316866217047334 10.178051143884659",
+        "defaultLocationType": "fixed",
+        "outputs": 1,
+        "options": [
+            {
+                "name": "schedule1",
+                "topic": "topic1",
+                "payloadType": "default",
+                "payload": "",
+                "expressionType": "cron",
+                "expression": "0 0 6,14 * * * *",
+                "location": "",
+                "offset": "0",
+                "solarType": "selected",
+                "solarEvents": "sunrise,sunset"
+            }
+        ],
+        "x": 2230,
+        "y": 540,
+        "wires": [
+            [
+                "93b17a4b3da6be6a"
+            ]
+        ]
+    },
+    {
+        "id": "0b39e1bed02ad85f",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Charging decision",
+        "func": "const SOC_MIN = 20; // %\nconst SOC_MAX = 100; // %\n\nconst ESS_STATE_KEEP_CHARGED = 9;\nconst ESS_STATE_OPTIMIZED = 10;\n\nconst BAT_CAPACITY = flow.get('bat_capacity'); // kWh\n\nconst CHARGER_EFFICIENCY_FACTOR = flow.get('charger_efficiency_factor') || 0.90;\nconst INVERTER_EFFICIENCY_FACTOR = flow.get('inverter_efficiency_factor') || 0.90;\nconst STORAGE_COSTS = flow.get('storage_costs') || 0.00;\n\nconst BAT_SOC = msg.payload.soc; // %\nconst PV_FORECAST = msg.payload.forecast; // kWh\nconst PV_FORECAST_PERC = Math.round((PV_FORECAST / BAT_CAPACITY) * 100); // %\n\n// prices\nconst price_current = flow.get('price_current') || 0; // Eur\nconst price_low = flow.get('price_low') || 0; // Eur\nconst average_price = msg.payload.average_price; // Eur\n\nconst price_discharge_allowed = average_price / (CHARGER_EFFICIENCY_FACTOR * INVERTER_EFFICIENCY_FACTOR) + STORAGE_COSTS;\nflow.set('price_discharge_allowed', price_discharge_allowed);\n\nconst remaining_energy = Math.round((BAT_CAPACITY * BAT_SOC / 100) * 100) / 100; // kWh\nflow.set('remaining_energy', remaining_energy);\n\nconst missing_energy = Math.round((BAT_CAPACITY - remaining_energy) * 100) / 100; // kWh\nflow.set('missing_energy', missing_energy);\n\n// default values\nlet adaptive_soc = SOC_MIN; // %\nlet decision = 'Discharge';\n\nif (price_current < 0)\n{\n    adaptive_soc = SOC_MAX;\n    decision = 'Charge Full';\n}\nelse\n{\n    const SOC_TARGET = SOC_MAX - PV_FORECAST_PERC;\n\n    if (msg.payload.active && (BAT_SOC < SOC_TARGET))\n    {\n        // Calculate max. SoC for charging\n        adaptive_soc = SOC_TARGET;\n        decision = 'Charge';\n    }\n    else\n    {\n        if (price_current > price_discharge_allowed)\n        {\n            adaptive_soc = SOC_MIN;\n            decision = 'Discharge';\n        }\n        else if (msg.payload.solarcharger_limited == true)\n        {\n            adaptive_soc = BAT_SOC - 10;\n            decision = 'Surplus';\n        }\n        else \n        {\n            adaptive_soc = BAT_SOC;\n            decision = 'Hold';\n        }\n    }\n}\n\n// ensure we never get out of bounds\nif (adaptive_soc < SOC_MIN) { adaptive_soc = SOC_MIN; }\nif (adaptive_soc > SOC_MAX) { adaptive_soc = SOC_MAX; }\n\n// set ess state based on desired soc\nlet ess_state = ESS_STATE_OPTIMIZED;\nif (adaptive_soc >= SOC_MAX)\n{\n    ess_state = ESS_STATE_KEEP_CHARGED;\n}\n\nnode.status({text:decision + \" | \" + BAT_SOC + \"% -> \" + adaptive_soc + \"% | Cur: \" + Math.round(price_current * 100) / 100 + \"€ | Avg: \" + Math.round(average_price * 100) / 100  + \"€ | Dis: \" + Math.round(price_discharge_allowed * 100) / 100 + \"€\"});\n\nreturn [\n    {'payload': adaptive_soc},\n    {'payload': {\n            'adaptive_soc': adaptive_soc,\n            'decision': decision\n        }\n    },\n    {'payload': ess_state}\n];",
+        "outputs": 3,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1890,
+        "y": 500,
+        "wires": [
+            [
+                "93b0b1a9790769a3",
+                "968404914029065c"
+            ],
+            [
+                "adc8bfb0d4684295"
+            ],
+            [
+                "46c83f949670e056",
+                "9617cc8d00c992c4"
+            ]
+        ]
+    },
+    {
+        "id": "0d4ee73769149161",
+        "type": "victron-input-system",
+        "z": "d1a79cb7a1857836",
+        "service": "com.victronenergy.system/0",
+        "path": "/Dc/Battery/Soc",
+        "serviceObj": {
+            "service": "com.victronenergy.system/0",
+            "name": "Venus system"
+        },
+        "pathObj": {
+            "path": "/Dc/Battery/Soc",
+            "type": "float",
+            "name": "Battery State of Charge (%)"
+        },
+        "name": "Get SoC",
+        "onlyChanges": false,
+        "x": 300,
+        "y": 680,
+        "wires": [
+            [
+                "cd877e00bb0d0227"
+            ]
+        ]
+    },
+    {
+        "id": "cd877e00bb0d0227",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Store SoC",
+        "func": "flow.set('victron_soc', msg.payload);\nnode.status({text:\"\" + msg.payload + \" %\"});\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 680,
+        "wires": [
+            [
+                "04d5fc391c60e2db"
+            ]
+        ]
+    },
+    {
+        "id": "63ce8d7211dd1baa",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = prices",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "prices",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1180,
+        "y": 160,
+        "wires": [
+            [
+                "3891061b2e053a45",
+                "b8ef7fe4f2c7eec1"
+            ]
+        ]
+    },
+    {
+        "id": "08c75c8a23839834",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "combine",
+        "func": "msg.payload.prices.config = {\n    \"maxPrice\": Number(msg.payload.max_price)\n};\nmsg.payload = msg.payload.prices;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1520,
+        "y": 100,
+        "wires": [
+            [
+                "b63cf73dfc98980f",
+                "1fdd25f865507034"
+            ]
+        ]
+    },
+    {
+        "id": "3891061b2e053a45",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1370,
+        "y": 100,
+        "wires": [
+            [
+                "08c75c8a23839834"
+            ]
+        ]
+    },
+    {
+        "id": "fd2431b376d968b2",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = max_price",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "max_price",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1190,
+        "y": 100,
+        "wires": [
+            [
+                "3891061b2e053a45"
+            ]
+        ]
+    },
+    {
+        "id": "04d5fc391c60e2db",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = soc",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "soc",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1430,
+        "y": 540,
+        "wires": [
+            [
+                "b8ef7fe4f2c7eec1",
+                "2624dc40de5b4781"
+            ]
+        ]
+    },
+    {
+        "id": "b30a95e9ee29a1d7",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = forecast",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "forecast",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1440,
+        "y": 500,
+        "wires": [
+            [
+                "b8ef7fe4f2c7eec1"
+            ]
+        ]
+    },
+    {
+        "id": "714bdde432f73713",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = active",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "active",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1430,
+        "y": 460,
+        "wires": [
+            [
+                "b8ef7fe4f2c7eec1"
+            ]
+        ]
+    },
+    {
+        "id": "b8ef7fe4f2c7eec1",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "6",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1710,
+        "y": 500,
+        "wires": [
+            [
+                "0b39e1bed02ad85f"
+            ]
+        ]
+    },
+    {
+        "id": "fc05a5366de834cb",
+        "type": "inject",
+        "z": "d1a79cb7a1857836",
+        "name": "Startup",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "10",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 160,
+        "wires": [
+            [
+                "a571f168cae8d985"
+            ]
+        ]
+    },
+    {
+        "id": "cb33af53c339a526",
+        "type": "ps-schedule-merger",
+        "z": "d1a79cb7a1857836",
+        "name": "Schedule Merger",
+        "outputIfNoSchedule": "false",
+        "logicFunction": "OR",
+        "schedulingDelay": 2000,
+        "sendCurrentValueWhenRescheduling": true,
+        "outputValueForOn": "true",
+        "outputValueForOff": "false",
+        "outputValueForOntype": "bool",
+        "outputValueForOfftype": "bool",
+        "x": 1930,
+        "y": 100,
+        "wires": [
+            [
+                "714bdde432f73713"
+            ],
+            [
+                "714bdde432f73713"
+            ],
+            [
+                "7886a9ba56d32feb",
+                "d1d3bf267703f920"
+            ]
+        ]
+    },
+    {
+        "id": "b63cf73dfc98980f",
+        "type": "ps-strategy-lowest-price",
+        "z": "d1a79cb7a1857836",
+        "name": "Lowest Price AM",
+        "fromTime": "00",
+        "toTime": "11",
+        "hoursOn": "4",
+        "maxPrice": "0.99",
+        "doNotSplit": true,
+        "sendCurrentValueWhenRescheduling": true,
+        "outputValueForOn": "true",
+        "outputValueForOff": "false",
+        "outputValueForOntype": "bool",
+        "outputValueForOfftype": "bool",
+        "outputIfNoSchedule": "false",
+        "outputOutsidePeriod": "false",
+        "contextStorage": "memoryOnly",
+        "x": 1710,
+        "y": 60,
+        "wires": [
+            [],
+            [],
+            [
+                "cb33af53c339a526"
+            ]
+        ]
+    },
+    {
+        "id": "1fdd25f865507034",
+        "type": "ps-strategy-lowest-price",
+        "z": "d1a79cb7a1857836",
+        "d": true,
+        "name": "Lowest Price PM",
+        "fromTime": "11",
+        "toTime": "20",
+        "hoursOn": "4",
+        "maxPrice": "0.99",
+        "doNotSplit": false,
+        "sendCurrentValueWhenRescheduling": true,
+        "outputValueForOn": "true",
+        "outputValueForOff": "false",
+        "outputValueForOntype": "bool",
+        "outputValueForOfftype": "bool",
+        "outputIfNoSchedule": "false",
+        "outputOutsidePeriod": "false",
+        "contextStorage": "memoryOnly",
+        "x": 1710,
+        "y": 120,
+        "wires": [
+            [],
+            [],
+            [
+                "cb33af53c339a526"
+            ]
+        ]
+    },
+    {
+        "id": "46c83f949670e056",
+        "type": "victron-output-ess",
+        "z": "d1a79cb7a1857836",
+        "service": "com.victronenergy.settings",
+        "path": "/Settings/CGwacs/BatteryLife/State",
+        "serviceObj": {
+            "service": "com.victronenergy.settings",
+            "name": "Venus settings"
+        },
+        "pathObj": {
+            "path": "/Settings/CGwacs/BatteryLife/State",
+            "type": "enum",
+            "name": "ESS state",
+            "enum": {
+                "1": "BatteryLife enabled (GUI controlled)",
+                "2": "Optimized Mode /w BatteryLife: self consumption",
+                "3": "Optimized Mode /w BatteryLife: self consumption, SoC exceeds 85%",
+                "4": "Optimized Mode /w BatteryLife: self consumption, SoC at 100%",
+                "5": "Optimized Mode /w BatteryLife: SoC below dynamic SoC limit",
+                "6": "Optimized Mode /w BatteryLife: SoC has been below SoC limit for more than 24 hours. Charging the battery (5A)",
+                "7": "Optimized Mode /w BatteryLife: Inverter/Charger is in sustain mode",
+                "8": "Optimized Mode /w BatteryLife: recharging, SoC dropped by 5% or more below the minimum SoC",
+                "9": "'Keep batteries charged' mode is enabled",
+                "10": "Optimized mode w/o BatteryLife: self consumption, SoC at or above minimum SoC",
+                "11": "Optimized mode w/o BatteryLife: self consumption, SoC is below minimum SoC",
+                "12": "Optimized mode w/o BatteryLife: recharging, SoC dropped by 5% or more below minimum SoC"
+            },
+            "writable": true
+        },
+        "initial": "10",
+        "name": "",
+        "onlyChanges": false,
+        "x": 2260,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "9617cc8d00c992c4",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "ess_state",
+        "active": true,
+        "tosidebar": false,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 2200,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "968404914029065c",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "adaptive_soc",
+        "active": true,
+        "tosidebar": false,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 2220,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "a571f168cae8d985",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Global settings",
+        "func": "flow.set(\"vrm_id\", \"XXXXXX\");\nflow.set(\"vrm_access_token\", \"XXXXXX\");\n\nflow.set(\"bat_capacity\", 14.4); // kWh\nflow.set(\"price_pv\", 0.08); // €\n\nflow.set(\"charger_efficiency_factor\", 0.90);\nflow.set(\"inverter_efficiency_factor\", 0.92);\nflow.set(\"storage_costs\", 0.00);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 100,
+        "wires": [
+            [
+                "ef1725482f2d21a8",
+                "efdca36ee3e1d7e3",
+                "3df118dae3ef385d",
+                "e311480a5f1e6576",
+                "0c95036277927287",
+                "25450a6f8fb618ac"
+            ]
+        ]
+    },
+    {
+        "id": "efdca36ee3e1d7e3",
+        "type": "vrm-api",
+        "z": "d1a79cb7a1857836",
+        "vrm": "ce0b2bd85123a79a",
+        "name": "",
+        "idSite": "XXXXXX",
+        "installations": "stats",
+        "attribute": "vrm_pv_charger_yield_fc",
+        "stats_interval": "hours",
+        "stats_start": "0",
+        "stats_end": "eod",
+        "verbose": false,
+        "x": 400,
+        "y": 480,
+        "wires": [
+            [
+                "79e916dc6934ff48"
+            ]
+        ]
+    },
+    {
+        "id": "3df118dae3ef385d",
+        "type": "vrm-api",
+        "z": "d1a79cb7a1857836",
+        "vrm": "ce0b2bd85123a79a",
+        "name": "",
+        "idSite": "XXXXXX",
+        "installations": "stats",
+        "attribute": "vrm_pv_inverter_yield_fc",
+        "stats_interval": "hours",
+        "stats_start": "0",
+        "stats_end": "eod",
+        "verbose": false,
+        "x": 400,
+        "y": 540,
+        "wires": [
+            [
+                "a425b9ba5399d752"
+            ]
+        ]
+    },
+    {
+        "id": "d149dae9e3413025",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1030,
+        "y": 500,
+        "wires": [
+            [
+                "852a7d89a32ef384"
+            ]
+        ]
+    },
+    {
+        "id": "852a7d89a32ef384",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "sum forecast",
+        "func": "const d = new Date();\nlet day = d.getDay();\n\nlet est_consumption_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet pv_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nfunction parseRecords(hours, records) {\n    for(let i = 0; i < records.length; i++)\n    {\n        const d = new Date(records[i][0]);\n        const hour = d.getHours();\n        hours[hour] += records[i][1] / 1000;\n    }\n}\n\nparseRecords(est_consumption_hours, msg.payload.consumption.records.vrm_consumption_fc);\nparseRecords(pv_hours, msg.payload.charger.records.vrm_pv_charger_yield_fc);\nparseRecords(pv_hours, msg.payload.inverter.records.vrm_pv_inverter_yield_fc);\n\nconst est_consumption_total = Math.round((msg.payload.consumption.totals.vrm_consumption_fc) / 1000 * 100) / 100; // kWh\nconst pv_charger = msg.payload.charger.totals.vrm_pv_charger_yield_fc; // Wh\nconst pv_inverter = msg.payload.inverter.totals.vrm_pv_inverter_yield_fc; // Wh\nconst pv_total = Math.round((pv_charger + pv_inverter) / 1000 * 100) / 100; // kWh\n\nlet pv_excess = 0;\nfor(let i = 0; i < pv_hours.length; i++)\n{\n    if(pv_hours[i] > est_consumption_hours[i])\n    {\n        pv_excess += pv_hours[i] - est_consumption_hours[i];\n    }\n}\npv_excess = Math.round(pv_excess * 100) / 100\n\nmsg.payload = pv_excess;\n\nflow.set('pv_forecast', pv_total);\nflow.set('pv_excess', pv_excess);\nnode.status({text:\"C: \" + est_consumption_total + \" | FC: \" + pv_total + \" | EX: \" + msg.payload});\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1170,
+        "y": 500,
+        "wires": [
+            [
+                "b30a95e9ee29a1d7"
+            ]
+        ]
+    },
+    {
+        "id": "79e916dc6934ff48",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = charger",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "charger",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 820,
+        "y": 480,
+        "wires": [
+            [
+                "d149dae9e3413025"
+            ]
+        ]
+    },
+    {
+        "id": "a425b9ba5399d752",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = inverter",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "inverter",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 820,
+        "y": 540,
+        "wires": [
+            [
+                "d149dae9e3413025"
+            ]
+        ]
+    },
+    {
+        "id": "adc8bfb0d4684295",
+        "type": "rbe",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "func": "rbei",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "topi": "topic",
+        "x": 2190,
+        "y": 500,
+        "wires": [
+            [
+                "f0bfc8dbb6331638"
+            ]
+        ]
+    },
+    {
+        "id": "f0bfc8dbb6331638",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Adaptive SoC message",
+        "func": "const adaptive_soc = msg.payload.adaptive_soc;\nconst decision = msg.payload.decision;\n\nconst soc = flow.get('victron_soc') || 0\nconst pv_forecast = flow.get('pv_forecast') || 0;\nconst pv_excess = flow.get('pv_excess') || 0;\nconst remaining_energy = flow.get('remaining_energy') || 0;\nconst missing_energy = flow.get('missing_energy') || 0;\nconst price_current = flow.get('price_current') || 0;\nconst average_price = flow.get('average_price') || 0;\n\nmsg.payload = \"Remaining: \" + remaining_energy + \" kWh\\n\" +\n              \"Missing: \" + missing_energy + \" kWh\\n\" + \n              \"Forecast: \" + pv_forecast + \" kWh\\n\" +\n              \"Excess: \" + pv_excess + \" kWh\\n\" +\n              \"Current SoC: \" + soc + \" %\\n\" +\n              \"Adaptive SoC: \" + adaptive_soc + \" %\\n\" +\n              \"Price current: \" + Math.round(price_current * 100) / 100 + \" Eur\\n\" +\n              \"Average price: \" + Math.round(average_price * 100) / 100 + \" Eur\\n\" +\n              \"Decision: \" + decision;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2470,
+        "y": 500,
+        "wires": [
+            [
+                "7f18f0875225b2b3"
+            ]
+        ]
+    },
+    {
+        "id": "93b17a4b3da6be6a",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Status message",
+        "func": "const soc = flow.get('victron_soc') || 0\nconst pv_forecast = flow.get('pv_forecast') || 0;\nconst pv_excess = flow.get('pv_excess') || 0;\nconst remaining_energy = flow.get('remaining_energy') || 0;\nconst missing_energy = flow.get('missing_energy') || 0;\nconst price_low = flow.get('price_low') || 0;\nconst price_high = flow.get('price_high') || 0;\nconst price_max_allowed = flow.get('price_max_allowed') || 0;\nconst average_price = flow.get('average_price') || 0;\nconst price_discharge_allowed = flow.get('price_discharge_allowed') || 0;\n\nmsg.payload = \"Remaining: \" + remaining_energy + \" kWh\\n\" +\n              \"Missing: \" + missing_energy + \" kWh\\n\" + \n              \"Forecast: \" + pv_forecast + \" kWh\\n\" +\n              \"Excess: \" + pv_excess + \" kWh\\n\" +\n              \"Current SoC: \" + soc + \" %\\n\" +\n              \"Price low: \" + Math.round(price_low * 100) / 100 + \" Eur\\n\" +\n              \"Price high: \" + Math.round(price_high * 100) / 100 + \" Eur\\n\" +\n              \"Price max allowed: \" + Math.round(price_max_allowed * 100) / 100 + \" Eur\\n\" +\n              \"Average price: \" + Math.round(average_price * 100) / 100 + \" Eur\\n\" +\n              \"Price discharge allowed: \" + Math.round(price_discharge_allowed * 100) / 100 + \" Eur\";\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2440,
+        "y": 540,
+        "wires": [
+            [
+                "7f18f0875225b2b3"
+            ]
+        ]
+    },
+    {
+        "id": "e4639136fa20eab5",
+        "type": "http request",
+        "z": "d1a79cb7a1857836",
+        "name": "VRM",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 530,
+        "y": 600,
+        "wires": [
+            [
+                "4d85bb5700973071"
+            ]
+        ]
+    },
+    {
+        "id": "e311480a5f1e6576",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Request forecast today",
+        "func": "const VRM_ID = flow.get(\"vrm_id\");\nconst VRM_ACCESS_TOKEN = flow.get(\"vrm_access_token\");\n\nlet today = new Date();\n\nlet startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);\nlet endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);\n\nlet start = Math.floor(startDate.getTime() / 1000);\nlet end = Math.floor(endDate.getTime() / 1000);\n\nreturn [\n    {\n        'url': \"https://vrmapi.victronenergy.com/v2/installations/\" + VRM_ID + \"/stats?type=forecast&interval=hours&start=\" + start + \"&end=\" + end,\n        'headers': {\n            'x-authorization': \"Token \" + VRM_ACCESS_TOKEN\n        }\n    }\n];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 600,
+        "wires": [
+            [
+                "e4639136fa20eab5"
+            ]
+        ]
+    },
+    {
+        "id": "777ee3871bdb0dbf",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = consumption",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "consumption",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 600,
+        "wires": [
+            [
+                "d149dae9e3413025"
+            ]
+        ]
+    },
+    {
+        "id": "4d85bb5700973071",
+        "type": "json",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 650,
+        "y": 600,
+        "wires": [
+            [
+                "777ee3871bdb0dbf"
+            ]
+        ]
+    },
+    {
+        "id": "8ee224baf35434a5",
+        "type": "victron-input-solarcharger",
+        "z": "d1a79cb7a1857836",
+        "service": "com.victronenergy.solarcharger/0",
+        "path": "/MppOperationMode",
+        "serviceObj": {
+            "service": "com.victronenergy.solarcharger/0",
+            "name": "MPPT 450/100 HQ2220WRFXJ"
+        },
+        "pathObj": {
+            "path": "/MppOperationMode",
+            "type": "enum",
+            "name": "MPP operation mode",
+            "enum": {
+                "0": "Off",
+                "1": "Voltage or current limited",
+                "2": "MPPT Tracker active",
+                "255": "Not available"
+            }
+        },
+        "initial": "",
+        "name": "",
+        "onlyChanges": false,
+        "x": 440,
+        "y": 840,
+        "wires": [
+            [
+                "b5a267a99b6e1d17"
+            ]
+        ]
+    },
+    {
+        "id": "c8b7bb0259c0186e",
+        "type": "victron-input-solarcharger",
+        "z": "d1a79cb7a1857836",
+        "service": "com.victronenergy.solarcharger/279",
+        "path": "/MppOperationMode",
+        "serviceObj": {
+            "service": "com.victronenergy.solarcharger/279",
+            "name": "MPPT 150/35 HQ2151AXHZN"
+        },
+        "pathObj": {
+            "path": "/MppOperationMode",
+            "type": "enum",
+            "name": "MPP operation mode",
+            "enum": {
+                "0": "Off",
+                "1": "Voltage or current limited",
+                "2": "MPPT Tracker active",
+                "255": "Not available"
+            }
+        },
+        "initial": "",
+        "name": "",
+        "onlyChanges": false,
+        "x": 430,
+        "y": 780,
+        "wires": [
+            [
+                "428d22459c0cef45"
+            ]
+        ]
+    },
+    {
+        "id": "428d22459c0cef45",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = solarcharger_1",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "solarcharger_1",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 780,
+        "wires": [
+            [
+                "b0245ec37828d40c"
+            ]
+        ]
+    },
+    {
+        "id": "b5a267a99b6e1d17",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = solarcharger_2",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "solarcharger_2",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 840,
+        "wires": [
+            [
+                "b0245ec37828d40c"
+            ]
+        ]
+    },
+    {
+        "id": "6afbb245e16b4cf1",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Solarcharger limited?",
+        "func": "if (msg.payload.solarcharger_1 == 1 || msg.payload.solarcharger_2 == 1)\n{\n    msg.payload = true;\n}\nelse\n{\n    msg.payload = false;\n}\n\nnode.status({text:\"Limited: \" + msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1200,
+        "y": 800,
+        "wires": [
+            [
+                "5bbb70b114961bcb"
+            ]
+        ]
+    },
+    {
+        "id": "b0245ec37828d40c",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1030,
+        "y": 800,
+        "wires": [
+            [
+                "6afbb245e16b4cf1"
+            ]
+        ]
+    },
+    {
+        "id": "60707cc15061236b",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = solarcharger_limited",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "solarcharger_limited",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1480,
+        "y": 580,
+        "wires": [
+            [
+                "b8ef7fe4f2c7eec1",
+                "2624dc40de5b4781",
+                "19f955f59b7e8fbe"
+            ]
+        ]
+    },
+    {
+        "id": "18036ad8fe0cc827",
+        "type": "victron-input-ess",
+        "z": "d1a79cb7a1857836",
+        "service": "com.victronenergy.settings",
+        "path": "/Settings/CGwacs/BatteryLife/MinimumSocLimit",
+        "serviceObj": {
+            "service": "com.victronenergy.settings",
+            "name": "Venus settings"
+        },
+        "pathObj": {
+            "path": "/Settings/CGwacs/BatteryLife/MinimumSocLimit",
+            "type": "integer",
+            "name": "Minimum Discharge SOC (%)"
+        },
+        "name": "",
+        "onlyChanges": false,
+        "x": 410,
+        "y": 940,
+        "wires": [
+            [
+                "310cf3d3991435e3",
+                "1d89948fa86e8e92"
+            ]
+        ]
+    },
+    {
+        "id": "222c2a5d5f7cc02d",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Surplus?",
+        "func": "if (msg.payload.solarcharger_limited == true\n    && msg.payload.min_discharge_soc >= msg.payload.soc)\n{\n    let now = new Date();\n    msg.payload = now.getTime();\n    node.status({text:\"Trigger\"});\n    return msg;\n}\n\nnode.status({text:\"Do nothing\"});\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1800,
+        "y": 940,
+        "wires": [
+            [
+                "a571f168cae8d985"
+            ]
+        ]
+    },
+    {
+        "id": "2624dc40de5b4781",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1650,
+        "y": 940,
+        "wires": [
+            [
+                "222c2a5d5f7cc02d"
+            ]
+        ]
+    },
+    {
+        "id": "310cf3d3991435e3",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = min_discharge_soc",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "min_discharge_soc",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1440,
+        "y": 940,
+        "wires": [
+            [
+                "2624dc40de5b4781"
+            ]
+        ]
+    },
+    {
+        "id": "1d89948fa86e8e92",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "Minimum Discharge SoC",
+        "active": true,
+        "tosidebar": false,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 850,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "5bbb70b114961bcb",
+        "type": "deglitch",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": 1,
+        "time": "10",
+        "timeUnits": "seconds",
+        "x": 1390,
+        "y": 800,
+        "wires": [
+            [
+                "60707cc15061236b"
+            ]
+        ]
+    },
+    {
+        "id": "19f955f59b7e8fbe",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "sc limited",
+        "active": true,
+        "tosidebar": false,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 1720,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "0c95036277927287",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Request kwh today",
+        "func": "const VRM_ID = flow.get(\"vrm_id\");\nconst VRM_ACCESS_TOKEN = flow.get(\"vrm_access_token\");\n\nlet today = new Date();\n\nlet startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);\nlet endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);\n\nlet start = Math.floor(startDate.getTime() / 1000);\nlet end = Math.floor(endDate.getTime() / 1000);\n\nreturn [\n    {\n        'url': \"https://vrmapi.victronenergy.com/v2/installations/\" + VRM_ID + \"/stats?type=kwh&interval=hours&start=\" + start + \"&end=\" + end,\n        'headers': {\n            'x-authorization': \"Token \" + VRM_ACCESS_TOKEN\n        }\n    }\n];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 360,
+        "wires": [
+            [
+                "6230d165b6899a66"
+            ]
+        ]
+    },
+    {
+        "id": "6230d165b6899a66",
+        "type": "http request",
+        "z": "d1a79cb7a1857836",
+        "name": "VRM",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 530,
+        "y": 360,
+        "wires": [
+            [
+                "239786a4e10da447"
+            ]
+        ]
+    },
+    {
+        "id": "239786a4e10da447",
+        "type": "json",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 650,
+        "y": 360,
+        "wires": [
+            [
+                "b75613459e9bc9e0"
+            ]
+        ]
+    },
+    {
+        "id": "1ce6916d7ff51198",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "calculate average price",
+        "func": "const BAT_CAPACITY = flow.get('bat_capacity'); // kWh\nconst PRICE_PV = flow.get('price_pv'); // Eur\n\nconst today = new Date();\nlet day = today.getDay();\nlet dom_today = today.getDate();\n\nlet yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\nlet dom_yesterday = yesterday.getDate();\n\nlet average_price_template = [\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0\n];\n\nlet average_price_days = flow.get('average_price_days', 'file') || average_price_template;\n//average_price_days[dom_yesterday] = 0.20;\nlet average_price = 0;\nlet average_price_initial = average_price_days[dom_yesterday];\nlet costs = 0;\nlet kwh = 0;\nlet kwh_initial = BAT_CAPACITY / 100 * msg.payload.venus.records.bs[23][3];\n\n// add initial data from change of day\ncosts += average_price_initial * kwh_initial;\nkwh += kwh_initial;\n\nlet tibber_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet grid_to_bat_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet pv_to_bat_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nfunction parseRecords(hours, records) {\n    for(let i = 0; i < records.length; i++)\n    {\n        const d = new Date(records[i][0]);\n        const hour = d.getHours();\n        hours[hour] += records[i][1];\n    }\n}\n\nlet tibber_records = msg.payload.tibber.viewer.homes[0].currentSubscription.priceInfo.today;\nfor(let i = 0; i < tibber_records.length; i++)\n{\n    tibber_hours[i] += tibber_records[i].total;\n}\n\nparseRecords(grid_to_bat_hours, msg.payload.kwh.records.Gb);\nparseRecords(pv_to_bat_hours, msg.payload.kwh.records.Pb);\n\n// calculate average price\nfor(let i = 0; i < 24; i++)\n{\n    // From grid\n    costs += tibber_hours[i] * grid_to_bat_hours[i];\n    kwh += grid_to_bat_hours[i];\n    // From pv\n    costs += PRICE_PV * pv_to_bat_hours[i];\n    kwh += pv_to_bat_hours[i];\n}\n\naverage_price = costs / kwh;\n\n// Store average price\naverage_price_days[dom_today] = average_price;\nflow.set('average_price_days', average_price_days, 'file');\n\nmsg.payload = average_price;\n\nflow.set('average_price', average_price);\nnode.status({text:\"Costs: \" + Math.round(costs * 100) / 100 + \" € | To bat: \" + Math.round(kwh * 100) / 100 + \" kWh | Avg: \" + Math.round(average_price * 100) / 100 + \" €\"});\n\n/*\nnode.error(\"dom_yesterday: \" + dom_yesterday);\nnode.error(\"kwh_initial: \" + kwh_initial);\nnode.error(\"average_price_initial: \" + average_price_initial);\nnode.error(\"dom_today: \" + dom_today);\nnode.error(\"kwh: \" + kwh);\nnode.error(\"average_price: \" + average_price);\n*/\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1210,
+        "y": 420,
+        "wires": [
+            [
+                "207bbb0d590fb41b"
+            ]
+        ]
+    },
+    {
+        "id": "b2a8df0aafa2c8dd",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1030,
+        "y": 420,
+        "wires": [
+            [
+                "1ce6916d7ff51198"
+            ]
+        ]
+    },
+    {
+        "id": "b75613459e9bc9e0",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = kwh",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "kwh",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 810,
+        "y": 360,
+        "wires": [
+            [
+                "b2a8df0aafa2c8dd",
+                "db41ecb5ce98dfd7"
+            ]
+        ]
+    },
+    {
+        "id": "df121a781659dce6",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = tibber",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "tibber",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 950,
+        "y": 220,
+        "wires": [
+            [
+                "b2a8df0aafa2c8dd"
+            ]
+        ]
+    },
+    {
+        "id": "25450a6f8fb618ac",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "Request venus yesterday",
+        "func": "const VRM_ID = flow.get(\"vrm_id\");\nconst VRM_ACCESS_TOKEN = flow.get(\"vrm_access_token\");\n\nlet yesterday = new Date()\nyesterday.setDate(yesterday.getDate() - 1);\n\nlet startDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);\nlet endDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999);\n\nlet start = Math.floor(startDate.getTime() / 1000);\nlet end = Math.floor(endDate.getTime() / 1000);\n\nreturn [\n    {\n        'url': \"https://vrmapi.victronenergy.com/v2/installations/\" + VRM_ID + \"/stats?type=venus&interval=hours&start=\" + start + \"&end=\" + end,\n        'headers': {\n            'x-authorization': \"Token \" + VRM_ACCESS_TOKEN\n        }\n    }\n];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 420,
+        "wires": [
+            [
+                "2e9eefc0cd1e5c75"
+            ]
+        ]
+    },
+    {
+        "id": "2e9eefc0cd1e5c75",
+        "type": "http request",
+        "z": "d1a79cb7a1857836",
+        "name": "VRM",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 530,
+        "y": 420,
+        "wires": [
+            [
+                "c30ac5ece6bee03f"
+            ]
+        ]
+    },
+    {
+        "id": "c30ac5ece6bee03f",
+        "type": "json",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 650,
+        "y": 420,
+        "wires": [
+            [
+                "74cc27122c471fad"
+            ]
+        ]
+    },
+    {
+        "id": "05c260bd7fb950a8",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "venus",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1030,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "74cc27122c471fad",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = venus",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "venus",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 820,
+        "y": 420,
+        "wires": [
+            [
+                "b2a8df0aafa2c8dd",
+                "05c260bd7fb950a8"
+            ]
+        ]
+    },
+    {
+        "id": "207bbb0d590fb41b",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = average_price",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "average_price",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1460,
+        "y": 420,
+        "wires": [
+            [
+                "b8ef7fe4f2c7eec1"
+            ]
+        ]
+    },
+    {
+        "id": "db41ecb5ce98dfd7",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "kwh",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1030,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "92712bec52625aa2",
+        "type": "comment",
+        "z": "d1a79cb7a1857836",
+        "name": "Version: 1.0.0",
+        "info": "Last edited: 2023-12-17",
+        "x": 110,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "073c94010f8c84e0",
+        "type": "tibber-api-endpoint",
+        "queryUrl": "https://api.tibber.com/v1-beta/gql",
+        "feedConnectionTimeout": "30",
+        "feedTimeout": "60",
+        "queryRequestTimeout": "30",
+        "name": "Tibber"
+    },
+    {
+        "id": "ae94fc0e9881e8c0",
+        "type": "ui_group",
+        "name": "Visualisations",
+        "tab": "9e3dc13a1610987c",
+        "order": 2,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "80c802fa5c3703dc",
+        "type": "pushbullet-config",
+        "name": "Pushbullet"
+    },
+    {
+        "id": "ce0b2bd85123a79a",
+        "type": "config-vrm-api",
+        "name": "VRM",
+        "token": "ddd76f489624516d2e2bac204b984bb7d6eb328849d7b3be0a39c40be15509f9"
+    },
+    {
+        "id": "9e3dc13a1610987c",
+        "type": "ui_tab",
+        "name": "Tibber",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
