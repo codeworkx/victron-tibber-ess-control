@@ -62,7 +62,7 @@
         },
         "name": "",
         "onlyChanges": false,
-        "x": 2320,
+        "x": 2340,
         "y": 360,
         "wires": []
     },
@@ -300,7 +300,7 @@
         "type": "function",
         "z": "d1a79cb7a1857836",
         "name": "Charging decision",
-        "func": "const SOC_MIN = 20; // %\nconst SOC_MAX = 100; // %\n\nconst ESS_STATE_KEEP_CHARGED = 9;\nconst ESS_STATE_OPTIMIZED = 10;\n\nconst BAT_CAPACITY = flow.get('bat_capacity'); // kWh\n\nconst CHARGER_EFFICIENCY_FACTOR = flow.get('charger_efficiency_factor') || 0.90;\nconst INVERTER_EFFICIENCY_FACTOR = flow.get('inverter_efficiency_factor') || 0.90;\nconst STORAGE_COSTS = flow.get('storage_costs') || 0.00;\n\nconst BAT_SOC = msg.payload.soc; // %\nconst PV_FORECAST = msg.payload.forecast; // kWh\nconst PV_FORECAST_PERC = Math.round((PV_FORECAST / BAT_CAPACITY) * 100); // %\n\n// prices\nconst price_current = flow.get('price_current') || 0; // Eur\nconst price_low = flow.get('price_low') || 0; // Eur\nconst average_price = msg.payload.average_price; // Eur\n\nconst price_discharge_allowed = average_price / (CHARGER_EFFICIENCY_FACTOR * INVERTER_EFFICIENCY_FACTOR) + STORAGE_COSTS;\nflow.set('price_discharge_allowed', price_discharge_allowed);\n\nconst remaining_energy = Math.round((BAT_CAPACITY * BAT_SOC / 100) * 100) / 100; // kWh\nflow.set('remaining_energy', remaining_energy);\n\nconst missing_energy = Math.round((BAT_CAPACITY - remaining_energy) * 100) / 100; // kWh\nflow.set('missing_energy', missing_energy);\n\n// default values\nlet adaptive_soc = SOC_MIN; // %\nlet decision = 'Discharge';\n\nif (price_current < 0)\n{\n    adaptive_soc = SOC_MAX;\n    decision = 'Charge Full';\n}\nelse\n{\n    const SOC_TARGET = SOC_MAX - PV_FORECAST_PERC;\n\n    if (msg.payload.active && (BAT_SOC < SOC_TARGET))\n    {\n        // Calculate max. SoC for charging\n        adaptive_soc = SOC_TARGET;\n        decision = 'Charge';\n    }\n    else\n    {\n        if (price_current > price_discharge_allowed)\n        {\n            adaptive_soc = SOC_MIN;\n            decision = 'Discharge';\n        }\n        else if (msg.payload.solarcharger_limited == true)\n        {\n            adaptive_soc = BAT_SOC - 10;\n            decision = 'Surplus';\n        }\n        else \n        {\n            adaptive_soc = BAT_SOC;\n            decision = 'Hold';\n        }\n    }\n}\n\n// ensure we never get out of bounds\nif (adaptive_soc < SOC_MIN) { adaptive_soc = SOC_MIN; }\nif (adaptive_soc > SOC_MAX) { adaptive_soc = SOC_MAX; }\n\n// set ess state based on desired soc\nlet ess_state = ESS_STATE_OPTIMIZED;\nif (adaptive_soc >= SOC_MAX)\n{\n    ess_state = ESS_STATE_KEEP_CHARGED;\n}\n\nnode.status({text:decision + \" | \" + BAT_SOC + \"% -> \" + adaptive_soc + \"% | Cur: \" + Math.round(price_current * 100) / 100 + \"€ | Avg: \" + Math.round(average_price * 100) / 100  + \"€ | Dis: \" + Math.round(price_discharge_allowed * 100) / 100 + \"€\"});\n\nreturn [\n    {'payload': adaptive_soc},\n    {'payload': {\n            'adaptive_soc': adaptive_soc,\n            'decision': decision\n        }\n    },\n    {'payload': ess_state}\n];",
+        "func": "const SOC_MIN = 20; // %\nconst SOC_MAX = 100; // %\n\nconst ESS_STATE_KEEP_CHARGED = 9;\nconst ESS_STATE_OPTIMIZED = 10;\n\nconst BAT_CAPACITY = flow.get('bat_capacity'); // kWh\n\nconst CHARGER_EFFICIENCY_FACTOR = flow.get('charger_efficiency_factor') || 0.90;\nconst INVERTER_EFFICIENCY_FACTOR = flow.get('inverter_efficiency_factor') || 0.92;\nconst STORAGE_COSTS = flow.get('storage_costs') || 0.00;\n\nconst BAT_SOC = msg.payload.soc; // %\nconst PV_FORECAST = msg.payload.forecast; // kWh\nconst PV_FORECAST_PERC = Math.round((PV_FORECAST / BAT_CAPACITY) * 100); // %\n\n// prices\nconst price_current = flow.get('price_current') || 0; // Eur\nconst price_low = flow.get('price_low') || 0; // Eur\nconst average_price = msg.payload.average_price; // Eur\n\nconst price_discharge_allowed = average_price / (CHARGER_EFFICIENCY_FACTOR * INVERTER_EFFICIENCY_FACTOR) + STORAGE_COSTS;\nflow.set('price_discharge_allowed', price_discharge_allowed);\n\nconst remaining_energy = Math.round((BAT_CAPACITY * BAT_SOC / 100) * 100) / 100; // kWh\nflow.set('remaining_energy', remaining_energy);\n\nconst missing_energy = Math.round((BAT_CAPACITY - remaining_energy) * 100) / 100; // kWh\nflow.set('missing_energy', missing_energy);\n\n// default values\nlet adaptive_soc = SOC_MIN; // %\nlet decision = 'Discharge';\n\nif (price_current < 0)\n{\n    adaptive_soc = SOC_MAX;\n    decision = 'Charge Full';\n}\nelse\n{\n    const SOC_TARGET = SOC_MAX - PV_FORECAST_PERC;\n\n    if (msg.payload.active && (BAT_SOC < SOC_TARGET))\n    {\n        // Calculate max. SoC for charging\n        adaptive_soc = SOC_TARGET;\n        decision = 'Charge';\n    }\n    else\n    {\n        if (price_current > price_discharge_allowed)\n        {\n            adaptive_soc = SOC_MIN;\n            decision = 'Discharge';\n        }\n        else if (msg.payload.solarcharger_limited == true)\n        {\n            adaptive_soc = BAT_SOC - 10;\n            decision = 'Surplus';\n        }\n        else \n        {\n            adaptive_soc = BAT_SOC;\n            decision = 'Hold';\n        }\n    }\n}\n\n// ensure we never get out of bounds\nif (adaptive_soc < SOC_MIN) { adaptive_soc = SOC_MIN; }\nif (adaptive_soc > SOC_MAX) { adaptive_soc = SOC_MAX; }\n\n// set ess state based on desired soc\nlet ess_state = ESS_STATE_OPTIMIZED;\nif (adaptive_soc >= SOC_MAX)\n{\n    ess_state = ESS_STATE_KEEP_CHARGED;\n}\n\nnode.status({text:decision + \" | \" + BAT_SOC + \"% -> \" + adaptive_soc + \"% | Cur: \" + Math.round(price_current * 100) / 100 + \"€ | Avg: \" + Math.round(average_price * 100) / 100  + \"€ | Dis: \" + Math.round(price_discharge_allowed * 100) / 100 + \"€\"});\n\nreturn [\n    {'payload': adaptive_soc},\n    {'payload': {\n            'adaptive_soc': adaptive_soc,\n            'decision': decision\n        }\n    },\n    {'payload': ess_state}\n];",
         "outputs": 3,
         "timeout": "",
         "noerr": 0,
@@ -547,7 +547,7 @@
         "to": "",
         "reg": false,
         "x": 1430,
-        "y": 460,
+        "y": 420,
         "wires": [
             [
                 "b8ef7fe4f2c7eec1"
@@ -729,7 +729,7 @@
         "initial": "10",
         "name": "",
         "onlyChanges": false,
-        "x": 2260,
+        "x": 2280,
         "y": 620,
         "wires": []
     },
@@ -746,7 +746,7 @@
         "targetType": "msg",
         "statusVal": "payload",
         "statusType": "auto",
-        "x": 2200,
+        "x": 2220,
         "y": 680,
         "wires": []
     },
@@ -763,7 +763,7 @@
         "targetType": "msg",
         "statusVal": "payload",
         "statusType": "auto",
-        "x": 2220,
+        "x": 2240,
         "y": 420,
         "wires": []
     },
@@ -784,155 +784,11 @@
         "wires": [
             [
                 "ef1725482f2d21a8",
-                "efdca36ee3e1d7e3",
-                "3df118dae3ef385d",
                 "e311480a5f1e6576",
                 "0c95036277927287",
-                "25450a6f8fb618ac"
-            ]
-        ]
-    },
-    {
-        "id": "efdca36ee3e1d7e3",
-        "type": "vrm-api",
-        "z": "d1a79cb7a1857836",
-        "vrm": "ce0b2bd85123a79a",
-        "name": "",
-        "idSite": "XXXXXX",
-        "installations": "stats",
-        "attribute": "vrm_pv_charger_yield_fc",
-        "stats_interval": "hours",
-        "stats_start": "0",
-        "stats_end": "eod",
-        "verbose": false,
-        "x": 400,
-        "y": 480,
-        "wires": [
-            [
-                "79e916dc6934ff48"
-            ]
-        ]
-    },
-    {
-        "id": "3df118dae3ef385d",
-        "type": "vrm-api",
-        "z": "d1a79cb7a1857836",
-        "vrm": "ce0b2bd85123a79a",
-        "name": "",
-        "idSite": "XXXXXX",
-        "installations": "stats",
-        "attribute": "vrm_pv_inverter_yield_fc",
-        "stats_interval": "hours",
-        "stats_start": "0",
-        "stats_end": "eod",
-        "verbose": false,
-        "x": 400,
-        "y": 540,
-        "wires": [
-            [
-                "a425b9ba5399d752"
-            ]
-        ]
-    },
-    {
-        "id": "d149dae9e3413025",
-        "type": "join",
-        "z": "d1a79cb7a1857836",
-        "name": "",
-        "mode": "custom",
-        "build": "object",
-        "property": "payload",
-        "propertyType": "msg",
-        "key": "topic",
-        "joiner": "\\n",
-        "joinerType": "str",
-        "accumulate": false,
-        "timeout": "",
-        "count": "3",
-        "reduceRight": false,
-        "reduceExp": "",
-        "reduceInit": "",
-        "reduceInitType": "",
-        "reduceFixup": "",
-        "x": 1030,
-        "y": 500,
-        "wires": [
-            [
-                "852a7d89a32ef384"
-            ]
-        ]
-    },
-    {
-        "id": "852a7d89a32ef384",
-        "type": "function",
-        "z": "d1a79cb7a1857836",
-        "name": "sum forecast",
-        "func": "const d = new Date();\nlet day = d.getDay();\n\nlet est_consumption_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet pv_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nfunction parseRecords(hours, records) {\n    for(let i = 0; i < records.length; i++)\n    {\n        const d = new Date(records[i][0]);\n        const hour = d.getHours();\n        hours[hour] += records[i][1] / 1000;\n    }\n}\n\nparseRecords(est_consumption_hours, msg.payload.consumption.records.vrm_consumption_fc);\nparseRecords(pv_hours, msg.payload.charger.records.vrm_pv_charger_yield_fc);\nparseRecords(pv_hours, msg.payload.inverter.records.vrm_pv_inverter_yield_fc);\n\nconst est_consumption_total = Math.round((msg.payload.consumption.totals.vrm_consumption_fc) / 1000 * 100) / 100; // kWh\nconst pv_charger = msg.payload.charger.totals.vrm_pv_charger_yield_fc; // Wh\nconst pv_inverter = msg.payload.inverter.totals.vrm_pv_inverter_yield_fc; // Wh\nconst pv_total = Math.round((pv_charger + pv_inverter) / 1000 * 100) / 100; // kWh\n\nlet pv_excess = 0;\nfor(let i = 0; i < pv_hours.length; i++)\n{\n    if(pv_hours[i] > est_consumption_hours[i])\n    {\n        pv_excess += pv_hours[i] - est_consumption_hours[i];\n    }\n}\npv_excess = Math.round(pv_excess * 100) / 100\n\nmsg.payload = pv_excess;\n\nflow.set('pv_forecast', pv_total);\nflow.set('pv_excess', pv_excess);\nnode.status({text:\"C: \" + est_consumption_total + \" | FC: \" + pv_total + \" | EX: \" + msg.payload});\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1170,
-        "y": 500,
-        "wires": [
-            [
-                "b30a95e9ee29a1d7"
-            ]
-        ]
-    },
-    {
-        "id": "79e916dc6934ff48",
-        "type": "change",
-        "z": "d1a79cb7a1857836",
-        "name": "topic = charger",
-        "rules": [
-            {
-                "t": "set",
-                "p": "topic",
-                "pt": "msg",
-                "to": "charger",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 820,
-        "y": 480,
-        "wires": [
-            [
-                "d149dae9e3413025"
-            ]
-        ]
-    },
-    {
-        "id": "a425b9ba5399d752",
-        "type": "change",
-        "z": "d1a79cb7a1857836",
-        "name": "topic = inverter",
-        "rules": [
-            {
-                "t": "set",
-                "p": "topic",
-                "pt": "msg",
-                "to": "inverter",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 820,
-        "y": 540,
-        "wires": [
-            [
-                "d149dae9e3413025"
+                "25450a6f8fb618ac",
+                "7828e71c7657f5c2",
+                "83ba6828883477ca"
             ]
         ]
     },
@@ -948,7 +804,7 @@
         "septopics": true,
         "property": "payload",
         "topi": "topic",
-        "x": 2190,
+        "x": 2210,
         "y": 500,
         "wires": [
             [
@@ -1063,7 +919,8 @@
         "y": 600,
         "wires": [
             [
-                "d149dae9e3413025"
+                "3e8442264c83392e",
+                "cd6a7f5c4a79d4d0"
             ]
         ]
     },
@@ -1494,7 +1351,7 @@
         "type": "function",
         "z": "d1a79cb7a1857836",
         "name": "calculate average price",
-        "func": "const BAT_CAPACITY = flow.get('bat_capacity'); // kWh\nconst PRICE_PV = flow.get('price_pv'); // Eur\n\nconst today = new Date();\nlet day = today.getDay();\nlet dom_today = today.getDate();\n\nlet yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\nlet dom_yesterday = yesterday.getDate();\n\nlet average_price_template = [\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0\n];\n\nlet average_price_days = flow.get('average_price_days', 'file') || average_price_template;\n//average_price_days[dom_yesterday] = 0.20;\nlet average_price = 0;\nlet average_price_initial = average_price_days[dom_yesterday];\nlet costs = 0;\nlet kwh = 0;\nlet kwh_initial = BAT_CAPACITY / 100 * msg.payload.venus.records.bs[23][3];\n\n// add initial data from change of day\ncosts += average_price_initial * kwh_initial;\nkwh += kwh_initial;\n\nlet tibber_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet grid_to_bat_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet pv_to_bat_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nfunction parseRecords(hours, records) {\n    for(let i = 0; i < records.length; i++)\n    {\n        const d = new Date(records[i][0]);\n        const hour = d.getHours();\n        hours[hour] += records[i][1];\n    }\n}\n\nlet tibber_records = msg.payload.tibber.viewer.homes[0].currentSubscription.priceInfo.today;\nfor(let i = 0; i < tibber_records.length; i++)\n{\n    tibber_hours[i] += tibber_records[i].total;\n}\n\nparseRecords(grid_to_bat_hours, msg.payload.kwh.records.Gb);\nparseRecords(pv_to_bat_hours, msg.payload.kwh.records.Pb);\n\n// calculate average price\nfor(let i = 0; i < 24; i++)\n{\n    // From grid\n    costs += tibber_hours[i] * grid_to_bat_hours[i];\n    kwh += grid_to_bat_hours[i];\n    // From pv\n    costs += PRICE_PV * pv_to_bat_hours[i];\n    kwh += pv_to_bat_hours[i];\n}\n\naverage_price = costs / kwh;\n\n// Store average price\naverage_price_days[dom_today] = average_price;\nflow.set('average_price_days', average_price_days, 'file');\n\nmsg.payload = average_price;\n\nflow.set('average_price', average_price);\nnode.status({text:\"Costs: \" + Math.round(costs * 100) / 100 + \" € | To bat: \" + Math.round(kwh * 100) / 100 + \" kWh | Avg: \" + Math.round(average_price * 100) / 100 + \" €\"});\n\n/*\nnode.error(\"dom_yesterday: \" + dom_yesterday);\nnode.error(\"kwh_initial: \" + kwh_initial);\nnode.error(\"average_price_initial: \" + average_price_initial);\nnode.error(\"dom_today: \" + dom_today);\nnode.error(\"kwh: \" + kwh);\nnode.error(\"average_price: \" + average_price);\n*/\n\nreturn msg;",
+        "func": "const BAT_CAPACITY = flow.get('bat_capacity'); // kWh\nconst PRICE_PV = flow.get('price_pv'); // Eur\n\nconst today = new Date();\nlet day = today.getDay();\nlet dom_today = today.getDate();\n\nlet yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\nlet dom_yesterday = yesterday.getDate();\n\nlet average_price_template = [\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n    0\n];\n\nlet average_price_days = flow.get('average_price_days', 'file') || average_price_template;\n//average_price_days[dom_yesterday] = 0.20;\nlet average_price = 0;\nlet average_price_initial = average_price_days[dom_yesterday];\nlet costs = 0;\nlet kwh = 0;\nlet kwh_initial = BAT_CAPACITY / 100 * msg.payload.venus.records.bs[23][3];\n\n// add initial data from change of day\ncosts += average_price_initial * kwh_initial;\nkwh += kwh_initial;\n\nlet tibber_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet grid_to_bat_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet pv_to_bat_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nfunction parseRecords(hours, records) {\n    for(let i = 0; i < records.length; i++)\n    {\n        const d = new Date(records[i][0]);\n        const hour = d.getHours();\n        hours[hour] += records[i][1];\n    }\n}\n\nlet tibber_records = msg.payload.tibber.viewer.homes[0].currentSubscription.priceInfo.today;\nfor(let i = 0; i < tibber_records.length; i++)\n{\n    tibber_hours[i] += tibber_records[i].total;\n}\n\nif (\"Gb\" in msg.payload.kwh.records)\n{\n    parseRecords(grid_to_bat_hours, msg.payload.kwh.records.Gb);\n}\n\nif (\"Pb\" in msg.payload.kwh.records)\n{\n    parseRecords(pv_to_bat_hours, msg.payload.kwh.records.Pb);\n}\n\n// calculate average price\nfor(let i = 0; i < 24; i++)\n{\n    // From grid\n    costs += tibber_hours[i] * grid_to_bat_hours[i];\n    kwh += grid_to_bat_hours[i];\n    // From pv\n    costs += PRICE_PV * pv_to_bat_hours[i];\n    kwh += pv_to_bat_hours[i];\n}\n\naverage_price = costs / kwh;\n\n// Store average price\naverage_price_days[dom_today] = average_price;\nflow.set('average_price_days', average_price_days, 'file');\n\nmsg.payload = average_price;\n\nflow.set('average_price', average_price);\nnode.status({text:\"Costs: \" + Math.round(costs * 100) / 100 + \" € | To bat: \" + Math.round(kwh * 100) / 100 + \" kWh | Avg: \" + Math.round(average_price * 100) / 100 + \" €\"});\n\n/*\nnode.error(\"dom_yesterday: \" + dom_yesterday);\nnode.error(\"kwh_initial: \" + kwh_initial);\nnode.error(\"average_price_initial: \" + average_price_initial);\nnode.error(\"dom_today: \" + dom_today);\nnode.error(\"kwh: \" + kwh);\nnode.error(\"average_price: \" + average_price);\n*/\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -1502,7 +1359,7 @@
         "finalize": "",
         "libs": [],
         "x": 1210,
-        "y": 420,
+        "y": 440,
         "wires": [
             [
                 "207bbb0d590fb41b"
@@ -1657,7 +1514,7 @@
         "type": "debug",
         "z": "d1a79cb7a1857836",
         "name": "venus",
-        "active": false,
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -1717,7 +1574,7 @@
         "to": "",
         "reg": false,
         "x": 1460,
-        "y": 420,
+        "y": 460,
         "wires": [
             [
                 "b8ef7fe4f2c7eec1"
@@ -1729,7 +1586,7 @@
         "type": "debug",
         "z": "d1a79cb7a1857836",
         "name": "kwh",
-        "active": false,
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -1745,11 +1602,172 @@
         "id": "92712bec52625aa2",
         "type": "comment",
         "z": "d1a79cb7a1857836",
-        "name": "Version: 1.0.0",
-        "info": "Last edited: 2023-12-17",
+        "name": "Version: 1.0.1",
+        "info": "Last edited: 2023-12-18",
         "x": 110,
         "y": 40,
         "wires": []
+    },
+    {
+        "id": "3e8442264c83392e",
+        "type": "debug",
+        "z": "d1a79cb7a1857836",
+        "name": "consumption",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1050,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "7828e71c7657f5c2",
+        "type": "vrm-api",
+        "z": "d1a79cb7a1857836",
+        "vrm": "ce0b2bd85123a79a",
+        "name": "",
+        "idSite": "XXXXXX",
+        "installations": "stats",
+        "attribute": "vrm_pv_charger_yield_fc",
+        "stats_interval": "hours",
+        "stats_start": "0",
+        "stats_end": "eod",
+        "verbose": false,
+        "x": 400,
+        "y": 480,
+        "wires": [
+            [
+                "3e6a7912a38bedfa"
+            ]
+        ]
+    },
+    {
+        "id": "83ba6828883477ca",
+        "type": "vrm-api",
+        "z": "d1a79cb7a1857836",
+        "vrm": "ce0b2bd85123a79a",
+        "name": "",
+        "idSite": "XXXXXX",
+        "installations": "stats",
+        "attribute": "vrm_pv_inverter_yield_fc",
+        "stats_interval": "hours",
+        "stats_start": "0",
+        "stats_end": "eod",
+        "verbose": false,
+        "x": 400,
+        "y": 540,
+        "wires": [
+            [
+                "a88fae01cacc2c6b"
+            ]
+        ]
+    },
+    {
+        "id": "3e6a7912a38bedfa",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = charger",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "charger",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 820,
+        "y": 480,
+        "wires": [
+            [
+                "cd6a7f5c4a79d4d0"
+            ]
+        ]
+    },
+    {
+        "id": "a88fae01cacc2c6b",
+        "type": "change",
+        "z": "d1a79cb7a1857836",
+        "name": "topic = inverter",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "inverter",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 820,
+        "y": 540,
+        "wires": [
+            [
+                "cd6a7f5c4a79d4d0"
+            ]
+        ]
+    },
+    {
+        "id": "cd6a7f5c4a79d4d0",
+        "type": "join",
+        "z": "d1a79cb7a1857836",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1030,
+        "y": 500,
+        "wires": [
+            [
+                "9f0e9463ee0f7313"
+            ]
+        ]
+    },
+    {
+        "id": "9f0e9463ee0f7313",
+        "type": "function",
+        "z": "d1a79cb7a1857836",
+        "name": "sum forecast",
+        "func": "const d = new Date();\nlet day = d.getDay();\n\nlet est_consumption_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nlet pv_hours = [\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0,\n    0, 0, 0, 0, 0, 0, 0, 0\n];\n\nfunction parseRecords(hours, records) {\n    for(let i = 0; i < records.length; i++)\n    {\n        const d = new Date(records[i][0]);\n        const hour = d.getHours();\n        hours[hour] += records[i][1] / 1000;\n    }\n}\n\nparseRecords(est_consumption_hours, msg.payload.consumption.records.vrm_consumption_fc);\nparseRecords(pv_hours, msg.payload.charger.records.vrm_pv_charger_yield_fc);\nparseRecords(pv_hours, msg.payload.inverter.records.vrm_pv_inverter_yield_fc);\n\nconst est_consumption_total = Math.round((msg.payload.consumption.totals.vrm_consumption_fc) / 1000 * 100) / 100; // kWh\nconst pv_charger = msg.payload.charger.totals.vrm_pv_charger_yield_fc; // Wh\nconst pv_inverter = msg.payload.inverter.totals.vrm_pv_inverter_yield_fc; // Wh\nconst pv_total = Math.round((pv_charger + pv_inverter) / 1000 * 100) / 100; // kWh\n\nlet pv_excess = 0;\nfor(let i = 0; i < pv_hours.length; i++)\n{\n    if(pv_hours[i] > est_consumption_hours[i])\n    {\n        pv_excess += pv_hours[i] - est_consumption_hours[i];\n    }\n}\npv_excess = Math.round(pv_excess * 100) / 100\n\nmsg.payload = pv_excess;\n\nflow.set('pv_forecast', pv_total);\nflow.set('pv_excess', pv_excess);\nnode.status({text:\"C: \" + est_consumption_total + \" | FC: \" + pv_total + \" | EX: \" + msg.payload});\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1170,
+        "y": 500,
+        "wires": [
+            [
+                "b30a95e9ee29a1d7"
+            ]
+        ]
     },
     {
         "id": "073c94010f8c84e0",
